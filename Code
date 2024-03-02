@@ -1,1 +1,162 @@
+#include <iostream>
+#include <mysql.h>
+#include <mysqld_error.h>
+#include <windows.h>
+#include <sstream>
+using namespace std;
+
+const char* HOST = "localhost";
+const char* USER = "root";
+const char* PW = "abdullah123";
+const char* DB = "mydb";
+
+class Car {
+    string Brand, Model;
+    int Serial, Rent;
+    bool Avail;
+
+public:
+    Car(int serial, string brand, string model, int rent, bool avail);
+    string getbrand();
+    string getmodel();
+    int getserial();
+    int getrent();
+    bool getavail();  // Change the return type to bool
+};
+
+Car::Car(int serial, string brand, string model, int rent, bool avail) {
+    Brand = brand;
+    Model = model;
+    Serial = serial;
+    Rent = rent;
+    Avail = avail;
+}
+
+string Car::getbrand() {
+    return Brand;
+}
+
+string Car::getmodel() {
+    return Model;
+}
+
+int Car::getserial() {
+    return Serial;
+}
+
+int Car::getrent() {
+    return Rent;
+}
+
+bool Car::getavail() {
+    return Avail;
+}
+
+bool isAvail(MYSQL* conn, string toS) {
+    string comp = "SELECT Avail FROM cars WHERE Serial = '" + toS + "'";
+    if (mysql_query(conn, comp.c_str())) {
+        cout << "Error: " << mysql_error(conn) << endl;
+        return false;
+    }
+    MYSQL_RES* result = mysql_store_result(conn);
+    if (result) {
+        MYSQL_ROW row = mysql_fetch_row(result);
+        if (row) {
+            int availability = atoi(row[0]);
+            mysql_free_result(result);
+            return (availability == 1);
+        }
+        mysql_free_result(result);
+    }
+    return false;
+}
+
+int main() {
+    MYSQL* conn;
+    conn = mysql_init(NULL);
+    if (!mysql_real_connect(conn, HOST, USER, PW, DB, 3306, NULL, 0)) {
+        cout << "Error: " << mysql_error(conn) << endl;
+    } else {
+        cout << "You are Logged into the database" << endl;
+    }
+
+    Car car1(1, "Honda", "Civic", 80, true);
+    Car car2(2, "Toyota", "Yaris", 50, true);
+    Car car3(3, "Suzuki", "Alto", 35, true);
+
+    bool exit = false;
+    while (!exit) {
+        system("cls");
+        cout << "Welcome to Car Rental Service" << endl;
+        cout << "******************************" << endl;
+        cout << "List of Cars:" << endl;
+    	cout << "1. " << car1.getbrand() << " " << car1.getmodel() << " $" << car1.getrent() << " - Serial No. " << car1.getserial() << endl;
+    	cout << "2. " << car2.getbrand() << " " << car2.getmodel() << " $" << car2.getrent() << " - Serial No. " << car2.getserial() << endl;
+    	cout << "3. " << car3.getbrand() << " " << car3.getmodel() << " $" << car3.getrent() << " - Serial No. " << car3.getserial() << endl;
+
+        int val;
+        cout << "1. Select a Car " << endl;
+        cout << "0. Exit " << endl;
+        cout << "Enter your choice = ";
+        cin >> val;
+
+        if (val == 1) {
+            int ser;
+            cout << "Enter Serial No. of Car = ";
+            cin >> ser;
+
+            stringstream ss;
+            ss << ser;
+            string toS = ss.str();
+
+            if (car1.getserial() == ser) {
+                if (isAvail(conn, toS)) {
+                    string upd = "UPDATE cars SET Avail = '0' WHERE Serial = '" + toS + "'";
+                    if (mysql_query(conn, upd.c_str())) {
+                        cout << "Error: " << mysql_error(conn) << endl;
+                    } else {
+                        cout << "You have selected the following car: " << endl;
+                        cout << car1.getbrand() << " " << car1.getmodel() << " " << car1.getrent() << " $" << endl;
+                    }
+                } else {
+                    cout << "Sorry, this car is already booked." << endl;
+                }
+            } else if (car2.getserial() == ser) {
+                // Code for car2 selection (similar to car1)
+                if (isAvail(conn, toS)) {
+            string upd = "UPDATE cars SET Avail = '0' WHERE Serial = '" + toS + "'";
+            if (mysql_query(conn, upd.c_str())) {
+                cout << "Error: " << mysql_error(conn) << endl;
+            } else {
+                cout << "You have selected the following car: " << endl;
+                cout << car2.getbrand() << " " << car2.getmodel() << " " << car2.getrent() << " $" << endl;
+            }
+        } else {
+            cout << "Sorry, this car is already booked." << endl;
+        }
+            } else if (car3.getserial() == ser) {
+                // Code for car3 selection (similar to car1)
+                if (isAvail(conn, toS)) {
+            string upd = "UPDATE cars SET Avail = '0' WHERE Serial = '" + toS + "'";
+            if (mysql_query(conn, upd.c_str())) {
+                cout << "Error: " << mysql_error(conn) << endl;
+            } else {
+                cout << "You have selected the following car: " << endl;
+                cout << car3.getbrand() << " " << car3.getmodel() << " " << car3.getrent() << " $" << endl;
+            }
+        } else {
+            cout << "Sorry, this car is already booked." << endl;
+        }
+            }
+            Sleep(4000);
+        } else if (val == 0) {
+            exit = true;
+            cout << "BYE" << endl;
+            Sleep(2000);
+        }
+    }
+
+    mysql_close(conn);
+    return 0;
+}
 
